@@ -181,23 +181,64 @@ window.onhashchange = () => load();
 
 
 // vaildations 
+const loginModal = new bootstrap.Modal(document.getElementById('loginModal'), {
+  keyboard: false
+})
 let signUp = true;
 const alertDIV = document.getElementById("alertDIV");
 const saveButton = document.getElementById("modalSave");
 const password = document.getElementById("password");
 const confirm_password = document.getElementById("confirm_password");
 const email = document.getElementById("email");
+const Name = document.getElementById("name");
 
 const tokenLogin = (token) => {
+  console.log("Login with token", token);
 
+  localStorage.account = token;
+  document.getElementById("loginNav").classList.add("hidden");
+  document.getElementById("registerNav").classList.add("hidden");
+  document.getElementById("logoutNav").classList.remove("hidden");
+
+  loginModal.hide();
 };
+
+const logout = () => {
+  localStorage.account = null;
+  document.getElementById("loginNav").classList.remove("hidden");
+  document.getElementById("registerNav").classList.remove("hidden");
+  document.getElementById("logoutNav").classList.add("hidden");
+}
 
 const signup = () => {
   signUp = true;
   document.getElementById("modalTitle").innerText = "Sign Up";
   saveButton.innerText = "Sign Up";
   saveButton.onclick = () => {
+    fetch('https://us-central1-myshow-6fbe8.cloudfunctions.net/data/register', {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      redirect: 'follow',
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value,
+        name: Name.value
+      }) 
+    })
+    .then(response => response.json())
+    .then(data => {
+      if(data.error) alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">${data.error}</div>`;
+      if(data.token) tokenLogin(data.token);
+    
+    }).catch(e => {
+      alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
+      Timeout !
+    </div>`;
+    });
 
+    
   }
   document.getElementById("nameEl").classList.remove("hidden");
   document.getElementById("cpEl").classList.remove("hidden");
@@ -225,6 +266,7 @@ const signin = () => {
       if(data.error) alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
       Wrong email or password!
     </div>`;
+    if(data.token) tokenLogin(data.token);
       console.log(data);
     
     }).catch(e => {

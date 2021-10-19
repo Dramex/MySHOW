@@ -23,16 +23,22 @@
                 <li class="nav-item">
                   <a class="nav-link" href="#">Watchlist</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" id="loginNav">
                   <a class="nav-link" data-bs-toggle="modal" data-bs-target="#loginModal" href="#"  onclick="signin()">
                     Sign in
                   </a>
 
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item" id="registerNav">
                   <a class="nav-link" data-bs-toggle="modal" data-bs-target="#loginModal" href="#" onclick="signup()">
                     Sign up
+                  </a>
+                </li>
+
+                <li class="nav-item hidden" id="logoutNav">
+                  <a class="nav-link" href="#" onclick="logout()">
+                    Logout
                   </a>
                 </li>
               </ul>
