@@ -9,19 +9,31 @@
     </head>
     <body>
       <div id="header" class="jumbotron jumbotron-fluid">
-        <nav class="navbar navbar-expand-lg navbar-light">
+        <nav class="navbar navbar-expand-lg navbar-light ">
           <div class="container">
             <a class="navbar-brand" href="#">MySHOW</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav">
+              <ul class="navbar-nav ms-auto flex-nowrap" style="margin-right: 20px;">
                 <li class="nav-item">
                   <a class="nav-link active" aria-current="page" href="#">Explore</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="#">Watchlist</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" data-bs-toggle="modal" data-bs-target="#loginModal" href="#"  onclick="signin()">
+                    Sign in
+                  </a>
+
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link" data-bs-toggle="modal" data-bs-target="#loginModal" href="#" onclick="signup()">
+                    Sign up
+                  </a>
                 </li>
               </ul>
             </div>
@@ -50,9 +62,59 @@
 
             <div id="data"></div>
 
+
+
+            
+<!-- Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 id="modalTitle" class="modal-title" id="exampleModalLabel">Sign Up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="alertDIV"></div>
+        <form>
+          <div class="mb-3" id="nameEl">
+            <label for="exampleInputEmail1" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" aria-describedby="emailHelp">
+          </div>
+          <div class="mb-3">
+            <label for="exampleInputEmail1" class="form-label">Email address</label>
+            <input type="email" id="email" class="form-control"  aria-describedby="emailHelp">
+            <div id="validationServerEmailFeedback" class="invalid-feedback">
+              Please insert valid email.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" required>
+          </div>
+          <div class="mb-3" id="cpEl">
+            <label for="confirm_password" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirm_password" required>
+            <div id="validationServerUsernameFeedback" class="invalid-feedback">
+              Password doesn't match.
+            </div>
+          </div>
+          <div class="mb-3 form-check" id="rememberEl">
+            <input type="checkbox" class="form-check-input" id="exampleCheck1">
+            <label class="form-check-label" for="exampleCheck1">Remember me</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" id="modalSave" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
             
           </div>
 
-          <script src="script.js" />
+          <script src="script.js"></script>
     </body>
 </html>

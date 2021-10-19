@@ -70,18 +70,36 @@ const search = debounce((term) => {
 
 const info = (num) => {
     if(!num.startsWith("movie") && !num.startsWith("tv")) return;
+    let type = num.split("-")[0];
+    let id = num.split("-")[1];
     window.location.hash = num;
     searchResults.classList.remove("show");
 
     data.innerHTML = `<div class="lds-ripple"><div></div><div></div></div>`;
 
 
-    fetch(`https://api.themoviedb.org/3/${num.split("-")[0]}/${num.split("-")[1]}?api_key=${api_key}&language=en-US`, {
+    Promise.all([
+      // get  details
+      fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${api_key}&language=en-US`, {
         method: 'GET',
         redirect: 'follow'
-        })
-    .then(response => response.json())
-    .then(result => {
+      }).then(response => response.json()),
+      // get credits
+      fetch(`https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${api_key}&language=en-US`, {
+          method: 'GET',
+          redirect: 'follow'
+      }).then(response => response.json()),
+      // get watch providers
+      fetch(`https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${api_key}&language=en-US`, {
+        method: 'GET',
+        redirect: 'follow'
+      })
+  .then(response => response.json())
+])
+    .then(values => {
+        const result = values[0];
+        const cast = values[1].cast;
+
         let name = result.title || result.name || result.original_title;
         document.getElementById("title").innerText =  name;
         if(result.tagline) document.getElementById("tagline").innerText = result.tagline;
@@ -91,7 +109,29 @@ const info = (num) => {
         `;
         
         data.innerHTML = `
-        <h1>${name}</h1>
+        <h1>Overview</h1>
+        <h4>${result.overview}</h4><br>
+        <h1>Top Cast</h1>
+        <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
+          ${cast.filter(ch => ch.profile_path).map(ch => `
+          <div class="col">
+          <div class="card mb-3" style="max-width: 540px;">
+  <div class="row g-0">
+    <div class="col-md-4">
+      <img src="https://www.themoviedb.org/t/p/w276_and_h350_face/${ch.profile_path}" class="img-fluid rounded-start" alt="...">
+    </div>
+    <div class="col-md-8">
+      <div class="card-body">
+        <h5 class="card-title">${ch.name}</h5>
+        <p class="card-text"><small class="text-muted">${ch.character}</small></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+          </div>`).join(" ")}
+        </div>
         `;
     })
 
@@ -138,3 +178,80 @@ const load = () => {
 
 window.onload = () => load();
 window.onhashchange = () => load();
+
+
+// vaildations 
+let signUp = true;
+const alertDIV = document.getElementById("alertDIV");
+const saveButton = document.getElementById("modalSave");
+const password = document.getElementById("password");
+const confirm_password = document.getElementById("confirm_password");
+const email = document.getElementById("email");
+
+const tokenLogin = (token) => {
+
+};
+
+const signup = () => {
+  signUp = true;
+  document.getElementById("modalTitle").innerText = "Sign Up";
+  saveButton.innerText = "Sign Up";
+  saveButton.onclick = () => {
+
+  }
+  document.getElementById("nameEl").classList.remove("hidden");
+  document.getElementById("cpEl").classList.remove("hidden");
+  document.getElementById("rememberEl").classList.add("hidden");
+}
+const signin = () => {
+  signUp = false;
+  document.getElementById("modalTitle").innerText = "Sign In";
+  saveButton.innerText = "Sign In";
+  saveButton.onclick = () => {
+    console.log("SEND LOGIN REQUEST");
+    fetch('https://us-central1-myshow-6fbe8.cloudfunctions.net/data/login', {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      redirect: 'follow',
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      }) 
+    })
+    .then(response => response.json())
+    .then(data => {
+      if(data.error) alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
+      Wrong email or password!
+    </div>`;
+      console.log(data);
+    
+    }).catch(e => {
+      alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
+      Timeout !
+    </div>`;
+    });
+
+    
+  }
+  document.getElementById("nameEl").classList.add("hidden");
+  document.getElementById("cpEl").classList.add("hidden");
+  document.getElementById("rememberEl").classList.remove("hidden");
+}
+
+email.onchange = () => {
+  console.log(email.value);
+  if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email.value)) {
+    return email.classList.remove("is-invalid");
+  }
+  return email.classList.add("is-invalid")
+}
+
+function match(){
+  if(!signUp) return;
+  if(confirm_password.value && password.value !== confirm_password.value) return confirm_password.classList.add("is-invalid")
+  return confirm_password.classList.remove("is-invalid")
+}
+confirm_password.addEventListener("keyup", match);
+password.addEventListener("keyup", match);

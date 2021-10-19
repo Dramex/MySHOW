@@ -66,18 +66,23 @@
     background-attachment: fixed;
     background-size:     cover;                      /* <------ */
 
-    height: 20rem;
+    height: 30rem;
   }
   .navbar-brand, .nav-link, .lead {
     color: #fff!important;
   }
 
   .display-4 {
-    margin-top: 5rem;
+    margin-top: 10rem;
     color: #fff!important;
   }
 
   .poster {
     padding: 10px;
     border-radius: 37px;
+    cursor: pointer;
   }
+
+.hidden {
+  display: none;
+}
