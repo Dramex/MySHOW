@@ -1,6 +1,17 @@
 const api_key = "bacc4e488075d44f82b8e0dcd623c34a";
 const searchResults = document.getElementById("searchResults");
 const data = document.getElementById("data");
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener('mouseenter', Swal.stopTimer)
+    toast.addEventListener('mouseleave', Swal.resumeTimer)
+  }
+});
 
 // debounce to avoid spam apis
 const debounce = (func, wait, immediate) => {
@@ -75,7 +86,9 @@ const info = (num) => {
     window.location.hash = num;
     searchResults.classList.remove("show");
 
-    data.innerHTML = `<div class="lds-ripple"><div></div><div></div></div>`;
+    data.innerHTML = `<div class="text-center">
+       <div class="lds-ripple"><div></div><div></div></div>
+    </div>`;
 
 
     Promise.all([
@@ -109,7 +122,85 @@ const info = (num) => {
         `;
         
         data.innerHTML = `
-        <h1>Overview</h1>
+        <div class="row">
+        <div class="col-xl-3 col-lg-6">
+          <div class="card card-stats mb-4 mb-xl-0">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Status</h5>
+                  <span class="h3 font-weight-bold mb-0">${result.status}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
+                    <i class="fas fa-question"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-6">
+          <div class="card card-stats mb-4 mb-xl-0">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                <h5 class="card-title text-uppercase text-muted mb-0">${type === "movie" ? "Budget" : "Seasons"}</h5>
+                <span class="h3 font-weight-bold mb-0">${type === "movie" ? "$" + result.budget.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : result.number_of_seasons}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
+                    <i class="fas fa-${type === "movie" ? "money-check-alt" : "list"}"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-6">
+          <div class="card card-stats mb-4 mb-xl-0">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">${type === "movie" ? "Revenue" : "Episodes"}</h5>
+                  <span class="h3 font-weight-bold mb-0">${type === "movie" ? "$" + result.revenue?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : result.number_of_episodes}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-yellow text-white rounded-circle shadow">
+                    <i class="fas fa-${type === "movie" ? "money-bill-wave" : "eye"}"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-6">
+          <div class="card card-stats mb-4 mb-xl-0">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Language</h5>
+                  <span class="h3 font-weight-bold mb-0">${result.spoken_languages[0].name}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-info text-white rounded-circle shadow">
+                    <i class="fas fa-language"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mb-3 mt-3">
+      ${loggedUser ? `
+      <button type="button" class="btn btn-primary" onclick="watch(${id}, '${type}');" ${loggedUser.list.find(f => f.type === type && f.id === id) ? "disabled" : ""}><i class="fas fa-clock"></i> Add to Watchlist</button>
+      <button type="button" class="btn btn-warning" onclick="watch(${id}, '${type}', true);" ${loggedUser.list.find(f => f.type === type && f.id === id) ? "disabled" : ""}> <i class="fas fa-eye"></i> Watched</button>
+      ` : ``}
+
+      </div>
+        <h1 class="mt-3">Overview</h1>
         <h4>${result.overview}</h4><br>
         <h1>Top Cast</h1>
         <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
@@ -139,7 +230,8 @@ const info = (num) => {
 
 }
 
-const load = () => {
+const load = async () => {
+  if(localStorage.account) await tokenLogin(localStorage.account);
   let hash = window.location.hash.substring(1);
   if(hash) return info(hash);
 
@@ -192,22 +284,54 @@ const confirm_password = document.getElementById("confirm_password");
 const email = document.getElementById("email");
 const Name = document.getElementById("name");
 
-const tokenLogin = (token) => {
+let loggedUser = null;
+const tokenLogin = async (token) => {
   console.log("Login with token", token);
 
   localStorage.account = token;
   document.getElementById("loginNav").classList.add("hidden");
   document.getElementById("registerNav").classList.add("hidden");
-  document.getElementById("logoutNav").classList.remove("hidden");
+  document.getElementById("userNav").classList.remove("hidden");
 
-  loginModal.hide();
+  return fetch(`https://us-central1-myshow-6fbe8.cloudfunctions.net/data/user/${token}`)
+  .then(response => response.json())
+  .then(data => {
+    loggedUser = data;
+    document.getElementById("usernameNav").innerText = data.name;
+    loginModal.hide();
+  });
+
+
 };
 
+const watch = (id, type, watched = false) => {
+  fetch(`https://us-central1-myshow-6fbe8.cloudfunctions.net/data/watch`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'authorization': localStorage.account
+    },
+    body: JSON.stringify({
+      id, type, watched
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+
+    console.log("watch", data);
+
+  });
+
+}
 const logout = () => {
+  Toast.fire({
+    icon: 'success',
+    title: 'Signed out successfully'
+  })
   localStorage.account = null;
   document.getElementById("loginNav").classList.remove("hidden");
   document.getElementById("registerNav").classList.remove("hidden");
-  document.getElementById("logoutNav").classList.add("hidden");
+  document.getElementById("userNav").classList.add("hidden");
 }
 
 const signup = () => {
@@ -229,9 +353,14 @@ const signup = () => {
     })
     .then(response => response.json())
     .then(data => {
-      if(data.error) alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">${data.error}</div>`;
+      if(data.error) return alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">${data.error}</div>`;
       if(data.token) tokenLogin(data.token);
     
+      Toast.fire({
+        icon: 'success',
+        title: 'Signed up successfully'
+      })
+
     }).catch(e => {
       alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
       Timeout !
@@ -245,6 +374,7 @@ const signup = () => {
   document.getElementById("rememberEl").classList.add("hidden");
 }
 const signin = () => {
+  
   signUp = false;
   document.getElementById("modalTitle").innerText = "Sign In";
   saveButton.innerText = "Sign In";
@@ -263,11 +393,14 @@ const signin = () => {
     })
     .then(response => response.json())
     .then(data => {
-      if(data.error) alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
+      if(data.error) return alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
       Wrong email or password!
     </div>`;
     if(data.token) tokenLogin(data.token);
-      console.log(data);
+    Toast.fire({
+      icon: 'success',
+      title: 'Signed in successfully'
+    })
     
     }).catch(e => {
       alertDIV.innerHTML = `<div class="alert alert-danger" role="alert">
