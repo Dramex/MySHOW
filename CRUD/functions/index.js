@@ -37,9 +37,20 @@ app.post('/login', async (req, res) => {
 });
 app.get('/user/:user_id', async (req, res) => {
   let doc = await firestore.collection("users").doc(req.params.user_id).get();
-  if (doc.empty) return res.json({error: "user not found"});
+  if (doc.empty || !doc.data()) return res.json({error: "user not found"});
   let user = doc.data();
-  return res.json({name: user.name || "Unknown", email: user.email});
+  return res.json({name: user.name || "Unknown", email: user.email, list: user.list || []});
+});
+app.post('/watch', async (req, res) => {
+  if(!req.headers.authorization) return res.json({error: "missing token"});
+  let doc = await firestore.collection("users").doc(req.headers.authorization).get();
+  if (doc.empty || !doc.data()) return res.json({error: "token is invalid"});
+  let user = doc.data();
+  if(!user.list) user.list = []; // fix old data without list
+  let newUser = {...user, list: [...user.list, {type: req.body.type, id: req.body.id, watched: req.body.watched || false}]}
+  await firestore.collection("users").doc(req.headers.authorization).set(newUser);
+
+  return res.json({ list: newUser.list });
 });
 // Expose Express API as a single Cloud Function:
 exports.data = functions.https.onRequest(app);
