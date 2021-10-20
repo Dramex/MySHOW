@@ -47,7 +47,7 @@ app.post('/watch', async (req, res) => {
   if (doc.empty || !doc.data()) return res.json({error: "token is invalid"});
   let user = doc.data();
   if(!user.list) user.list = []; // fix old data without list
-  let list = user.list.filter(f => f.id !== req.body.id) // remove duplicates
+  let list = user.list.filter(f => parseInt(f.id) !== parseInt(req.body.id)) // remove duplicates
   let newUser = {...user, list: [...list, {type: req.body.type, id: req.body.id, poster_path: req.body.poster_path, watched: req.body.watched || false}]}
   await firestore.collection("users").doc(req.headers.authorization).set(newUser);
 
@@ -60,7 +60,7 @@ app.delete('/watch', async (req, res) => {
   if (doc.empty || !doc.data()) return res.json({error: "token is invalid"});
   let user = doc.data();
   if(!user.list) user.list = []; // fix old data without list
-  let list = user.list.filter(f => f.id !== req.body.id); // delete item
+  let list = user.list.filter(f => parseInt(f.id) !== parseInt(req.body.id)); // delete item
   let newUser = {...user, list}
   await firestore.collection("users").doc(req.headers.authorization).set(newUser);
 

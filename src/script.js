@@ -232,7 +232,7 @@ const info = (num) => {
 
 const watchList = () => {
   document.getElementById("title").innerText =  'Watchlist';
-  if(!loggedUser) return data.innerText `<h1> Login to see this page. </h1>`
+  if(!loggedUser) return data.innerText = `<h1> Login to see this page. </h1>`
   data.innerHTML = `<h1>Watch list</h1>`;
   if(loggedUser.list.some(g => !g.watched)) {
     data.innerHTML += `<div id="top_moives" class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
