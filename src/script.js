@@ -195,8 +195,8 @@ const info = (num) => {
 
       <div class="text-center mb-3 mt-3">
       ${loggedUser ? `
-      <button type="button" class="btn btn-primary" onclick="watch(${id}, '${type}');" ${loggedUser.list.find(f => f.type === type && f.id === id) ? "disabled" : ""}><i class="fas fa-clock"></i> Add to Watchlist</button>
-      <button type="button" class="btn btn-warning" onclick="watch(${id}, '${type}', true);" ${loggedUser.list.find(f => f.type === type && f.id === id) ? "disabled" : ""}> <i class="fas fa-eye"></i> Watched</button>
+      <button type="button" class="btn btn-primary" onclick="watch(${id}, '${type}', '${result.poster_path}');" ${loggedUser.list.find(f => f.type === type && f.id === parseInt(id)) ? "disabled" : ""}><i class="fas fa-clock"></i> Add to Watchlist</button>
+      <button type="button" class="btn btn-warning" onclick="watch(${id}, '${type}', '${result.poster_path}', true);" ${loggedUser.list.find(f => f.type === type && f.id === parseInt(id) && f.watched) ? "disabled" : ""}> <i class="fas fa-eye"></i> Watched</button>
       ` : ``}
 
       </div>
@@ -230,11 +230,49 @@ const info = (num) => {
 
 }
 
-const load = async () => {
-  if(localStorage.account) await tokenLogin(localStorage.account);
-  let hash = window.location.hash.substring(1);
-  if(hash) return info(hash);
+const watchList = () => {
+  document.getElementById("title").innerText =  'Watchlist';
+  if(!loggedUser) return data.innerText `<h1> Login to see this page. </h1>`
+  data.innerHTML = `<h1>Watch list</h1>`;
+  if(loggedUser.list.some(g => !g.watched)) {
+    data.innerHTML += `<div id="top_moives" class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
+</div>
 
+<div id="top_moives" class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
+      ${loggedUser.list.filter(g => !g.watched).map(v => `<div class="col watch" >
+      <button type="button" onclick="deleteFromList('${v.type}','${v.id}')" class="btn-close" aria-label="Close"></button>
+    <img class="poster" height="300px" onclick="info('${v.type}-${v.id}')" src="https://www.themoviedb.org/t/p/w440_and_h660_face/${v.poster_path}">
+
+    </div>`).join(" ")}
+</div>`;
+  } else {
+    data.innerHTML += `<h4>No items in the watch list.</h4>`
+  }
+
+  data.innerHTML += `<h1>Watched</h1>`;
+  if(loggedUser.list.some(g => g.watched)) {
+    data.innerHTML += `<div id="top_moives" class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
+
+    ${loggedUser.list.filter(g => g.watched).map(v => `<div class="col watch" >
+      <button type="button" onclick="deleteFromList('${v.type}','${v.id}')" class="btn-close" aria-label="Close"></button>
+    <img class="poster" height="300px" onclick="info('${v.type}-${v.id}')" src="https://www.themoviedb.org/t/p/w440_and_h660_face/${v.poster_path}">
+
+    </div>`).join(" ")}
+
+</div>
+
+<div id="top_moives" class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
+  
+</div>`;
+  } else {
+    data.innerHTML += `<h4>No items in the watch list.</h4>`
+  }
+  
+};
+const load = async () => {
+  let hash = window.location.hash.substring(1);
+  if(hash === "watchlist") return watchList();
+  if(hash) return info(hash);
   document.getElementById("title").innerText =  'Explore';
   document.getElementById("tagline").innerText = '';
   document.getElementById("header").style = `
@@ -268,7 +306,13 @@ const load = async () => {
 
 }
 
-window.onload = () => load();
+window.onload = async () => {
+  // check token then login
+  if(localStorage.account) await tokenLogin(localStorage.account);
+
+  load();
+
+}
 window.onhashchange = () => load();
 
 
@@ -304,7 +348,25 @@ const tokenLogin = async (token) => {
 
 };
 
-const watch = (id, type, watched = false) => {
+const deleteFromList = (type, id) => {
+  fetch('https://us-central1-myshow-6fbe8.cloudfunctions.net/data/watch', {
+    method: "DELETE",
+    headers: {
+      'Content-Type': 'application/json',
+      'authorization': localStorage.account
+    },
+    body: JSON.stringify({
+      id, type
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    
+    loggedUser.list = data.list;
+    watchList();
+  });
+}
+const watch = (id, type, poster_path, watched = false) => {
   fetch(`https://us-central1-myshow-6fbe8.cloudfunctions.net/data/watch`, {
     method: "POST",
     headers: {
@@ -312,14 +374,15 @@ const watch = (id, type, watched = false) => {
       'authorization': localStorage.account
     },
     body: JSON.stringify({
-      id, type, watched
+      id, type, watched, poster_path
     })
   })
   .then(response => response.json())
   .then(data => {
 
     console.log("watch", data);
-
+    loggedUser.list = data.list;
+    info(`${type}-${id}`);
   });
 
 }
