@@ -21,3 +21,4 @@ Movies and tv shows tracking and explore.
 
 ## Links:
 - Trello https://trello.com/b/Wb61OtLC/watchlist
+- figma https://www.figma.com/file/SWRCsHlyWjPuptIx68QgfL/MySHOW 
